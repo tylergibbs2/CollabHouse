@@ -1,29 +1,57 @@
-from quart import abort, Quart, render_template, request
-from quart_jwt_extended import create_access_token, JWTManager, jwt_required
+import asyncio
+
+import asyncpg
+from cryptography.fernet import Fernet
+from quart import Quart, render_template
+import quart_jwt_extended as jwt
 
 from .config import QuartConfig
+from .routes import blueprints
 
 
 app = Quart("collabhouse")
 app.config.from_object(QuartConfig())
-JWTManager(app)
+jwt_manager = jwt.JWTManager(app)
 
 
-@app.route("/login", methods=["POST"])
-async def login():
-    try:
-        data = await request.get_json()
-    except TypeError:
-        return abort(400)
+for blueprint in blueprints:
+    app.register_blueprint(blueprint)
 
-    username = data.get("username", None)
-    password = data.get("password", None)
 
-    if not username:
-        return {"status": 400, "error": "Missing username parameter."}, 400
-    if not password:
-        return {"status": 400, "error": "Missing password parameter."}, 400
+@jwt_manager.token_in_blacklist_loader
+def check_if_blacklisted(jwt_payload):
+    jti = jwt_payload["jti"]
 
+    return jti in app.blacklisted_tokens
+
+
+@app.before_serving
+async def setup_db():
+    loop = asyncio.get_event_loop()
+
+    app.db_pool = await asyncpg.create_pool(
+        host=app.config["PSQL_HOST"],
+        port=app.config["PSQL_PORT"],
+        user=app.config["PSQL_USER"],
+        password=app.config["PSQL_PASS"],
+        database=app.config["PSQL_DB"],
+        loop=loop
+    )
+
+    async with app.db_pool.acquire() as con:
+        tokens = await con.fetch("""
+            SELECT
+                token
+            FROM
+                old_tokens;
+        """)
+
+    app.blacklisted_tokens = set(t["token"] for t in tokens)
+
+
+@app.before_serving
+async def setup_fernet():
+    app.fernet = Fernet(app.config["TOKEN_KEY"])
 
 
 @app.errorhandler(404)

@@ -1,8 +1,12 @@
 const path = require('path');
+const webpack = require('webpack');
 
 module.exports = {
     entry: {
         index: './src/index.js'
+    },
+    devServer: {
+        historyApiFallback: true
     },
     module: {
         rules: [
@@ -22,13 +26,11 @@ module.exports = {
             }
         ],
     },
-    resolve: {
-        extensions: ['.js'],
-        alias: {
-            'react': 'preact/compat',
-            'react-dom': 'preact/compat'
-        }
-    },
+    plugins: [
+        new webpack.ProvidePlugin({
+            "React": "react"
+        })
+    ],
     output: {
         filename: 'bundle.js',
         path: path.resolve(__dirname, './collabhouse/static/js/'),
