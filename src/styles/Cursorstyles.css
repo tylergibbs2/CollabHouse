@@ -1,0 +1,16 @@
+.cursor {
+    border-radius: 50%;
+    width:30px;
+    height:30px;
+    position: absolute;
+    z-index: 1000;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    transition: all 0.2s ease;
+    transform-origin: 150% 150%;
+}
+
+.project-name {
+    margin-left: 40px;
+    margin-top: 60px;
+}

@@ -1,0 +1,13 @@
+#userelem {
+    margin-right: 35px;
+    /* background:#0D110D;  */
+    /* background-color: linear-gradient(90deg, #0D110D 50%, #0D110D 50%); */
+    border:none;
+    margin-bottom:-10px;
+  
+}
+
+
+ #userelem img {
+     border-bottom:5px solid; 
+}

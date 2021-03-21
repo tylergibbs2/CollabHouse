@@ -1,7 +1,6 @@
 import asyncio
 
 import asyncpg
-from cryptography.fernet import Fernet
 from quart import Quart, render_template
 import quart_jwt_extended as jwt
 
@@ -47,11 +46,6 @@ async def setup_db():
         """)
 
     app.blacklisted_tokens = set(t["token"] for t in tokens)
-
-
-@app.before_serving
-async def setup_fernet():
-    app.fernet = Fernet(app.config["TOKEN_KEY"])
 
 
 @app.errorhandler(404)

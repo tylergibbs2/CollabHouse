@@ -1,0 +1,53 @@
+.logout-btn {
+    font-family: 'Prociono', serif;
+    border: 2px black solid;
+    background-color: #F6F6F7;
+    box-shadow: inset 0px 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    margin-right:10px;
+    width:80px;
+    height:30px;
+    float:right;
+    margin-top:20px;
+}
+
+.logo {
+    width:100px;
+    height:100px;
+}
+h1 {
+    font-weight:bold;
+    font-size: 20px;
+}
+
+#session-info-title {
+    font-family: "Prociono, sans-serif";
+    font-size: 24px;
+}
+
+#session-info-row2 {
+    margin-bottom:-5px;
+}
+
+#add-button {
+    font-size: 50px;
+    color: white;
+    text-align: center;
+    background-color: purple;
+    border-radius: 50%;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    height: 75px;
+    width: 75px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    border:none;
+}
+
+#dark-icon {
+    width: 50px;
+    height:50px;
+    float:right;
+}
+

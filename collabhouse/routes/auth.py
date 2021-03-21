@@ -76,23 +76,24 @@ async def login():
         return {"status": 400, "error": "Missing password parameter."}, 400
 
     async with app.db_pool.acquire() as con:
-        hash_ = await con.fetchval("""
+        user = await con.fetchrow("""
                 SELECT
+                    name,
                     password_hash
                 FROM
                     users
                 WHERE LOWER($1) = LOWER(email);
             """, email)
 
-    if hash_ is None:
+    if user["password_hash"] is None:
         return {"status": 401, "error": "Invalid credentials."}, 401
 
     try:
-        hasher.verify(hash_, password)
+        hasher.verify(user["password_hash"], password)
     except VerifyMismatchError:
         return {"status": 401, "error": "Invalid credentials."}, 401
 
-    if hasher.check_needs_rehash(hash_):
+    if hasher.check_needs_rehash(user["password_hash"]):
         async with app.db_pool.acquire() as con:
             await con.execute("""
                 UPDATE
@@ -102,18 +103,30 @@ async def login():
                 WHERE LOWER($2) = LOWER(email);
             """, hasher.hash(password), email)
 
-    tokens = {
-        "access_token": jwt.create_access_token(identity=email.lower())
+    additional = {
+        "name": user["name"]
     }
+    access_token = jwt.create_access_token(identity=email.lower(), user_claims=additional)
 
     headers = {
         "Content-Type": "application/json"
     }
 
-    response = Response(json.dumps({"status": 200, "result": tokens}), headers=headers)
+    async with app.db_pool.acquire() as con:
+        user = await con.fetchrow("""
+                SELECT
+                    id,
+                    name,
+                    email
+                FROM
+                    users
+                WHERE LOWER($1) = LOWER(email);
+            """, email)
 
-    response.set_cookie("access_token_cookie", tokens["access_token"])
-    response.set_cookie("jwt_csrf_token", jwt.get_csrf_token(tokens["access_token"]))
+    response = Response(json.dumps({"status": 200, "result": dict(user)}), headers=headers)
+
+    response.set_cookie("access_token_cookie", access_token)
+    response.set_cookie("jwt_csrf_token", jwt.get_csrf_token(access_token))
 
     return response
 
@@ -154,7 +167,7 @@ async def register():
         if existing:
             return {"status": 400, "error": "User with specified email already exists."}, 400
 
-        await con.execute("""
+        new_user = await con.fetchrow("""
             INSERT INTO
                 users (
                     email,
@@ -162,20 +175,22 @@ async def register():
                     name
                 )
             VALUES
-                ($1, $2, $3);
+                ($1, $2, $3)
+            RETURNING id::TEXT, email, name;
         """, email, hash_, name)
 
-    tokens = {
-        "access_token": jwt.create_access_token(identity=email.lower())
+    additional = {
+        "name": name
     }
+    access_token = jwt.create_access_token(identity=email.lower(), user_claims=additional)
 
     headers = {
         "Content-Type": "application/json"
     }
 
-    response = Response(json.dumps({"status": 200, "result": tokens}), headers=headers)
+    response = Response(json.dumps({"status": 200, "result": dict(new_user)}), headers=headers)
 
-    response.set_cookie("access_token_cookie", tokens["access_token"])
-    response.set_cookie("jwt_csrf_token", jwt.get_csrf_token(tokens["access_token"]))
+    response.set_cookie("access_token_cookie", access_token)
+    response.set_cookie("jwt_csrf_token", jwt.get_csrf_token(access_token))
 
     return response

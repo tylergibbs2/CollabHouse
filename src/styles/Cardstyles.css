@@ -1,0 +1,15 @@
+#card-container {
+    border:1px solid black;
+    font-family: 'Prociono', serif;
+    border-radius:10px;
+    margin-bottom:40px;
+    margin-top: 40px;
+    padding: 3px;
+}
+
+#project-info {
+    margin-top: 20px;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
